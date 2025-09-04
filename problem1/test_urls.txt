@@ -1,0 +1,8 @@
+http://httpbin.org/status/200
+http://httpbin.org/delay/2
+http://httpbin.org/status/404
+http://httpbin.org/json
+http://httpbin.org/html
+https://www.example.com
+http://httpbin.org/status/500
+http://invalid.url.that.does.not.exist.com
