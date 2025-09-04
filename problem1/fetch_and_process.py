@@ -79,34 +79,49 @@ def fetch_once(url: str, timeout: float = 10.0) -> dict:
     return rec
 
 
-def summarize(records: list[dict]) -> dict:
+
+def summarize(records: list[dict], start_time: str, end_time: str) -> dict:
     total = len(records)
+    success = 0
+    fail = 0
+    total_time = 0.0
+    count_time = 0
+    total_bytes = 0
+    status_dist = {}
 
-    # success: no exception AND 200–399
-    successes = [
-        r for r in records if (r.get("error") is None and isinstance(r.get("status_code"), int)
-                               and 200 <= r["status_code"] < 400)
-    ]
-    failed = total - len(successes)
+    for r in records:
+        code = r.get("status_code")
+        err = r.get("error")
+        if code and 200 <= code < 400 and not err:
+            success += 1
+        else:
+            fail += 1
 
-    # average response time over those that have it
-    times = [r["response_time_ms"] for r in records if isinstance(r.get("response_time_ms"), (int, float))]
-    avg_time = (sum(times) / len(times)) if times else None
+        rt = r.get("response_time_ms")
+        if isinstance(rt, (int, float)):
+            total_time += rt
+            count_time += 1
 
-    # content length min/max over those that have it
-    sizes = [r["content_length"] for r in records if isinstance(r.get("content_length"), int)]
-    largest = max(sizes) if sizes else None
-    smallest = min(sizes) if sizes else None
+        clen = r.get("content_length")
+        if isinstance(clen, int):
+            total_bytes += clen
+
+        if code is not None:
+            code_str = str(code)
+            status_dist[code_str] = status_dist.get(code_str, 0) + 1
+
+    avg_time = (total_time / count_time) if count_time > 0 else None
 
     return {
         "total_urls": total,
-        "successful_requests": len(successes),
-        "failed_requests": failed,
+        "successful_requests": success,
+        "failed_requests": fail,
         "average_response_time_ms": avg_time,
-        "largest_content_length": largest,
-        "smallest_content_length": smallest,
+        "total_bytes_downloaded": total_bytes,
+        "status_code_distribution": status_dist,
+        "processing_start": start_time,
+        "processing_end": end_time,
     }
-
 
 def write_errors_log(records: list[dict], path: str) -> None:
     lines = []
@@ -147,9 +162,14 @@ def main():
 
     # Fetch
     records = []
+
+    start_time = iso_utc_now()
+
     for u in urls:
         print(f"Fetching: {u}")
         records.append(fetch_once(u))
+
+    end_time = iso_utc_now()
 
     # Write responses.json
     responses_path = os.path.join(output_dir, "responses.json")
@@ -159,7 +179,7 @@ def main():
     # Write summary.json
     summary_path = os.path.join(output_dir, "summary.json")
     with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(summarize(records), f, indent=2, ensure_ascii=False)
+        json.dump(summarize(records, start_time, end_time), f, indent=2, ensure_ascii=False)
 
     # Write errors.log
     errors_path = os.path.join(output_dir, "errors.log")
