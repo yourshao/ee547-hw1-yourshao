@@ -14,7 +14,7 @@ STOPWORDS = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for'
 
 ARXIV_ENDPOINT = "http://export.arxiv.org/api/query"
 
-_UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
+_UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~:"
 
 
 def _percent_encode(s):
@@ -25,7 +25,6 @@ def _percent_encode(s):
         elif ch == " ":
             out.append("+")
         else:
-
             for b in ch.encode("utf-8"):
                 out.append("%%%02X" % b)
     return "".join(out)
