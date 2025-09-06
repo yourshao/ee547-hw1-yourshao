@@ -1,0 +1,3 @@
+https://www.example.com
+https://www.wikipedia.org
+https://httpbin.org/html

@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  fetcher:
+    build: ./fetcher
+    container_name: pipeline-fetcher
+    volumes:
+      - pipeline-data:/shared
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  processor:
+    build: ./processor
+    container_name: pipeline-processor
+    volumes:
+      - pipeline-data:/shared
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - fetcher
+
+  analyzer:
+    build: ./analyzer
+    container_name: pipeline-analyzer
+    volumes:
+      - pipeline-data:/shared
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - processor
+
+volumes:
+  pipeline-data:
+    name: pipeline-shared-data
